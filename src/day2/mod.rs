@@ -6,11 +6,6 @@ enum Outcome {
 }
 
 impl From<&str> for Outcome {
-    /// "Anyway, the second column says how the round needs to end:
-    /// - X means you need to lose,
-    /// - Y means you need to end the round in a draw, and
-    /// - Z means you need to win.
-    /// Good luck!"
     fn from(string: &str) -> Self {
         match string {
             "X" => Outcome::Loose,
@@ -38,6 +33,17 @@ enum Shape {
     Scissors,
 }
 
+impl From<&str> for Shape {
+    fn from(string: &str) -> Self {
+        match string {
+            "A" | "X" => Self::Rock,
+            "B" | "Y" => Self::Paper,
+            "C" | "Z" => Self::Scissors,
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl Shape {
     fn get_score(&self) -> u8 {
         match self {
@@ -47,6 +53,8 @@ impl Shape {
         }
     }
 
+    /// Simulates a "round" of rock, paper, scissors and returns the correct amount of points as
+    /// defined in the problem.
     fn play_against(&self, opponent_shape: Self) -> u8 {
         let round_outcome = match self {
             Self::Rock => match opponent_shape {
@@ -69,11 +77,8 @@ impl Shape {
         self.get_score() + u8::from(round_outcome)
     }
 
-    fn get_desired_outcome_against(&self, opponent_hand: Shape, desired_outcome: Outcome) -> u8 {
-        let our_hand = self.get_shape_for_desired_outcome(desired_outcome);
-        our_hand.play_against(opponent_hand)
-    }
-
+    /// Using the opponents shape, determines what shape we have to play to trigger the desired
+    /// outcome.
     fn get_shape_for_desired_outcome(&self, outcome: Outcome) -> Self {
         match outcome {
             Outcome::Win => match self {
@@ -95,74 +100,45 @@ impl Shape {
     }
 }
 
-impl From<&str> for Shape {
-    /// "The first column is what your opponent is going to play:
-    /// - A for Rock,
-    /// - B for Paper, and
-    /// - C for Scissors.
-    /// The second column--"...
-    /// The second column, you reason, must be what you should play in response:
-    /// - X for Rock,
-    /// - Y for Paper, and
-    /// - Z for Scissors.
-    fn from(string: &str) -> Self {
-        match string {
-            "A" | "X" => Self::Rock,
-            "B" | "Y" => Self::Paper,
-            "C" | "Z" => Self::Scissors,
-            _ => unreachable!(),
-        }
-    }
-}
-
 pub fn part_1(input: &str) -> i32 {
-    prepare_input_for_part_1(input)
+    parse_input::<Shape, Shape>(input)
         .into_iter()
-        .fold(0, |acc, curr| acc + curr.1.play_against(curr.0) as i32)
-}
-
-pub fn part_2(input: &str) -> i32 {
-    prepare_input_for_part_2(input)
-        .into_iter()
-        .fold(0, |acc, curr| {
-            acc + {
-                let opponent_shape = curr.0;
-                let our_hand = curr.0.get_shape_for_desired_outcome(curr.2);
-
-                our_hand.play_against(opponent_shape)
-            } as i32
+        .fold(0, |acc, (opponent_shape, our_shape)| {
+            acc + our_shape.play_against(opponent_shape) as i32
         })
 }
 
-fn prepare_input_for_part_1(input: &str) -> Vec<(Shape, Shape)> {
-    parse_rounds(input, |round| {
-        let mut split = round.split_whitespace();
-        (split.next().unwrap().into(), split.next().unwrap().into())
-    })
+pub fn part_2(input: &str) -> i32 {
+    parse_input::<Shape, Outcome>(input).into_iter().fold(
+        0,
+        |acc, (opponent_shape, desired_outcome)| {
+            acc + opponent_shape
+                .get_shape_for_desired_outcome(desired_outcome)
+                .play_against(opponent_shape) as i32
+        },
+    )
 }
 
-fn prepare_input_for_part_2(input: &str) -> Vec<(Shape, Shape, Outcome)> {
-    parse_rounds(input, |round| {
-        let mut split = round.split_whitespace();
-        let (opponent_shape, our_shape_str): (Shape, &str) =
-            (split.next().unwrap().into(), split.next().unwrap());
-
-        (opponent_shape, our_shape_str.into(), our_shape_str.into())
-    })
-}
-
-fn parse_rounds<R, F>(input: &str, predicate: F) -> Vec<R>
+fn parse_input<O, U>(input: &str) -> Vec<(O, U)>
 where
-    F: FnMut(&str) -> R,
+    O: for<'a> From<&'a str>,
+    U: for<'a> From<&'a str>,
 {
-    input.trim().split('\n').map(predicate).collect()
+    input
+        .trim()
+        .split('\n')
+        .map(|round| {
+            let mut split = round.split_whitespace();
+            let mut next = || split.next().unwrap();
+
+            (next().into(), next().into())
+        })
+        .collect()
 }
 
 #[cfg(test)]
 mod test {
-    use crate::day2::{
-        part_1, part_2, prepare_input_for_part_1, prepare_input_for_part_2, Outcome, Shape,
-    };
+    use crate::day2::{parse_input, part_1, part_2, Outcome, Shape};
 
     const EXAMPLE_INPUT: &str = "A Y\nB X\nC Z\n";
     const FILE_INPUT: &str = include_str!("input.txt");
@@ -181,7 +157,7 @@ mod test {
 
     #[test]
     fn test_prepare_input_for_part_1() {
-        let result = prepare_input_for_part_1(EXAMPLE_INPUT);
+        let result = parse_input(EXAMPLE_INPUT);
         let expected = vec![
             (Shape::Rock, Shape::Paper),
             (Shape::Paper, Shape::Rock),
@@ -196,11 +172,11 @@ mod test {
 
     #[test]
     fn test_prepare_input_for_part_2() {
-        let result = prepare_input_for_part_2(EXAMPLE_INPUT);
+        let result = parse_input(EXAMPLE_INPUT);
         let expected = vec![
-            (Shape::Rock, Shape::Paper, Outcome::Draw),
-            (Shape::Paper, Shape::Rock, Outcome::Loose),
-            (Shape::Scissors, Shape::Scissors, Outcome::Win),
+            (Shape::Rock, Outcome::Draw),
+            (Shape::Paper, Outcome::Loose),
+            (Shape::Scissors, Outcome::Win),
         ];
 
         assert_eq!(result.len(), 3);
