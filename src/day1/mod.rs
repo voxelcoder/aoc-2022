@@ -1,13 +1,13 @@
 use std::cmp::Reverse;
 
 pub fn part_1(blocks: &[Vec<i32>]) -> (usize, i32) {
-    let summed_blocks = blocks
+    let max_element_and_index = blocks
         .iter()
         .map(|part| part.iter().sum::<i32>())
         .enumerate()
         .max_by(|(_, a), (_, b)| a.cmp(b));
 
-    summed_blocks.unwrap()
+    max_element_and_index.unwrap()
 }
 
 pub fn part_2(blocks: &[Vec<i32>]) -> i32 {
