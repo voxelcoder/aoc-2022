@@ -175,7 +175,8 @@ mod test {
 
     #[test]
     fn test_part_2() {
-        assert_eq!(part_2(EXAMPLE_INPUT), 12)
+        assert_eq!(part_2(EXAMPLE_INPUT), 12);
+        assert_eq!(part_2(FILE_INPUT), 10498);
     }
 
     #[test]
