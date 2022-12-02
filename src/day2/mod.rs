@@ -189,7 +189,7 @@ mod test {
         ];
 
         assert_eq!(result.len(), 3);
-        for (index, (result, expected)) in result.iter().zip(expected.iter()).enumerate() {
+        for (result, expected) in result.iter().zip(expected.iter()) {
             assert_eq!(result, expected)
         }
     }
@@ -204,7 +204,7 @@ mod test {
         ];
 
         assert_eq!(result.len(), 3);
-        for (index, (result, expected)) in result.iter().zip(expected.iter()).enumerate() {
+        for (result, expected) in result.iter().zip(expected.iter()) {
             assert_eq!(result, expected)
         }
     }
