@@ -30,6 +30,9 @@ impl<T> ToVec<T> for (T, (T, T)) {
     }
 }
 
+type Group<'a> = Vec<&'a str>;
+type Groups<'a> = Vec<Group<'a>>;
+
 fn get_chars<'a>(group: &[&'a str]) -> Zip<Chars<'a>, Zip<Chars<'a>, Chars<'a>>> {
     group[0].chars().zip(
         group[1]
@@ -49,7 +52,7 @@ fn get_priority(letter: &str) -> u8 {
     } as u8
 }
 
-fn prepare_input_part_1(input: &str) -> Vec<Vec<&str>> {
+fn prepare_input_part_1(input: &str) -> Groups<'_> {
     input
         .trim()
         .split('\n')
@@ -57,7 +60,7 @@ fn prepare_input_part_1(input: &str) -> Vec<Vec<&str>> {
         .collect()
 }
 
-fn prepare_input_part_2(input: &str) -> Vec<Vec<&str>> {
+fn prepare_input_part_2(input: &str) -> Groups<'_> {
     input
         .trim()
         .split('\n')
@@ -77,7 +80,7 @@ fn compartment_has_char(compartment: &[&str], char: char) -> Option<char> {
     None
 }
 
-fn get_common_item(compartment: Vec<&str>) -> Option<char> {
+fn get_common_item(compartment: Group<'_>) -> Option<char> {
     get_chars(&compartment).find_map(|chars| {
         chars
             .to_vec()
@@ -86,24 +89,21 @@ fn get_common_item(compartment: Vec<&str>) -> Option<char> {
     })
 }
 
-fn sum_priorities(
-    groups: Vec<Vec<&str>>,
-    get_char_predicate: fn(Vec<&str>) -> Option<char>,
-) -> u32 {
+fn sum_priorities(groups: Groups<'_>, get_char_predicate: fn(Vec<&str>) -> Option<char>) -> u32 {
     groups.into_iter().fold(0, |acc, compartment| {
         acc + get_priority(&get_char_predicate(compartment).unwrap().to_string()) as u32
     })
 }
 
-pub fn execute(groups: Vec<Vec<&str>>) -> u32 {
+pub fn execute(groups: Groups<'_>) -> u32 {
     sum_priorities(groups, get_common_item)
 }
 
-pub fn part_1(groups: Vec<Vec<&str>>) -> u32 {
+pub fn part_1(groups: Groups<'_>) -> u32 {
     execute(prepare_input_part_1(include_str!("input.txt")))
 }
 
-pub fn part_2(groups: Vec<Vec<&str>>) -> u32 {
+pub fn part_2(groups: Groups<'_>) -> u32 {
     execute(prepare_input_part_2(include_str!("input.txt")))
 }
 
