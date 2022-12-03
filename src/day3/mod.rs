@@ -7,6 +7,31 @@ const LETTERS_UPPERCASE: [char; 26] = [
     'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
 ];
 
+trait ToVec<T>
+where
+    T: Sized,
+{
+    fn to_vec(self) -> Vec<T>;
+}
+
+impl<T> ToVec<T> for (T, T) {
+    fn to_vec(self) -> Vec<T> {
+        vec![self.0, self.1]
+    }
+}
+
+impl<T> ToVec<T> for (T, T, T) {
+    fn to_vec(self) -> Vec<T> {
+        vec![self.0, self.1, self.2]
+    }
+}
+
+impl<T> ToVec<T> for (T, (T, T)) {
+    fn to_vec(self) -> Vec<T> {
+        vec![self.0, self.1 .0, self.1 .1]
+    }
+}
+
 fn get_priority(letter: &str) -> u8 {
     let letter = letter.chars().next().unwrap();
     let find_position = |set: [char; 26]| set.into_iter().position(|char| char == letter);
@@ -36,48 +61,40 @@ fn prepare_input_part_2(input: &str) -> Vec<(&str, &str, &str)> {
         .collect()
 }
 
-fn get_common_item(compartment: (&str, &str)) -> Option<char> {
-    let has_char = |char: char| {
-        let contains = |str: &str| str.chars().any(|c| c == char);
+fn compartment_has_char(compartment: &[&str], char: char) -> Option<char> {
+    let contains = |str: &str| str.chars().any(|c| c == char);
 
-        if [compartment.0, compartment.1]
-            .iter()
-            .all(|str| contains(str))
-        {
-            return Some(char);
-        }
-
-        None
-    };
-
-    for (first, second) in compartment.0.chars().zip(compartment.1.chars()) {
-        if let Some(char) = has_char(first).or_else(|| has_char(second)) {
-            return Some(char);
-        }
+    if compartment.iter().all(|comp| contains(comp)) {
+        return Some(char);
     }
 
     None
 }
 
+fn get_common_item_part_1(compartment: (&str, &str)) -> Option<char> {
+    let compartment = compartment.to_vec();
+    compartment[0]
+        .chars()
+        .zip(compartment[1].chars())
+        .find_map(|chars| {
+            chars
+                .to_vec()
+                .into_iter()
+                .find_map(|c| compartment_has_char(&compartment, c))
+        })
+}
+
 fn get_common_item_part_2(group: (&str, &str, &str)) -> Option<char> {
-    let has_char = |char: char| {
-        let contains = |str: &str| str.chars().any(|c| c == char);
-
-        if contains(group.0) && contains(group.1) && contains(group.2) {
-            Some(char)
-        } else {
-            None
-        }
-    };
-
-    for (first, (second, third)) in group.0.chars().zip(group.1.chars().zip(group.2.chars())) {
-        if let Some(char) = has_char(first).or_else(|| has_char(second).or_else(|| has_char(third)))
-        {
-            return Some(char);
-        }
-    }
-
-    None
+    let group = group.to_vec();
+    group[0]
+        .chars()
+        .zip(group[1].chars().zip(group[2].chars()))
+        .find_map(|chars| {
+            chars
+                .to_vec()
+                .into_iter()
+                .find_map(|c| compartment_has_char(&group, c))
+        })
 }
 
 fn sum_priorities<T>(groups: Vec<T>, get_char_predicate: fn(T) -> Option<char>) -> u32 {
@@ -87,7 +104,7 @@ fn sum_priorities<T>(groups: Vec<T>, get_char_predicate: fn(T) -> Option<char>) 
 }
 
 pub fn part_1(groups: Vec<(&str, &str)>) -> u32 {
-    sum_priorities(groups, get_common_item)
+    sum_priorities(groups, get_common_item_part_1)
 }
 
 pub fn part_2(groups: Vec<(&str, &str, &str)>) -> u32 {
@@ -97,7 +114,7 @@ pub fn part_2(groups: Vec<(&str, &str, &str)>) -> u32 {
 #[cfg(test)]
 mod test {
     use crate::day3::{
-        get_common_item, part_1, part_2, prepare_input_part_1, prepare_input_part_2,
+        get_common_item_part_1, part_1, part_2, prepare_input_part_1, prepare_input_part_2,
     };
 
     const EXAMPLE_INPUT: &str = "vJrwpWtwJgWrhcsFMMfFFhFp\njqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL\nPmmdzqPrVvPwwTWBwg\nwMqvLMZHhHMvwLHjbvcjnnSBnvTQFn\nttgJtRGJQctTZtZT\nCrZsJsPPZsGzwwsLwLmpwMDw";
@@ -128,13 +145,5 @@ mod test {
         ];
 
         assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_get_common_item() {
-        assert_eq!(
-            get_common_item(("vJrwpWtwJgWr", "hcsFMMfFFhFp")).unwrap(),
-            'p'
-        );
     }
 }
