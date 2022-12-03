@@ -20,12 +20,6 @@ impl<T> ToVec<T> for (T, T) {
     }
 }
 
-impl<T> ToVec<T> for (T, T, T) {
-    fn to_vec(self) -> Vec<T> {
-        vec![self.0, self.1, self.2]
-    }
-}
-
 impl<T> ToVec<T> for (T, (T, T)) {
     fn to_vec(self) -> Vec<T> {
         vec![self.0, self.1 .0, self.1 .1]
@@ -43,21 +37,24 @@ fn get_priority(letter: &str) -> u8 {
     } as u8
 }
 
-fn prepare_input_part_1(input: &str) -> Vec<(&str, &str)> {
+fn prepare_input_part_1(input: &str) -> Vec<[&str; 2]> {
     input
         .trim()
         .split('\n')
-        .map(|line| line.split_at(line.len() / 2))
+        .map(|line| {
+            let (first_compartment, second_compartment) = line.split_at(line.len() / 2);
+            [first_compartment, second_compartment]
+        })
         .collect()
 }
 
-fn prepare_input_part_2(input: &str) -> Vec<(&str, &str, &str)> {
+fn prepare_input_part_2(input: &str) -> Vec<[&str; 3]> {
     input
         .trim()
         .split('\n')
         .collect::<Vec<_>>()
         .chunks(3)
-        .map(|group| (group[0], group[1], group[2]))
+        .map(|group| [group[0], group[1], group[2]])
         .collect()
 }
 
@@ -71,8 +68,7 @@ fn compartment_has_char(compartment: &[&str], char: char) -> Option<char> {
     None
 }
 
-fn get_common_item_part_1(compartment: (&str, &str)) -> Option<char> {
-    let compartment = compartment.to_vec();
+fn get_common_item_part_1(compartment: [&str; 2]) -> Option<char> {
     compartment[0]
         .chars()
         .zip(compartment[1].chars())
@@ -84,8 +80,7 @@ fn get_common_item_part_1(compartment: (&str, &str)) -> Option<char> {
         })
 }
 
-fn get_common_item_part_2(group: (&str, &str, &str)) -> Option<char> {
-    let group = group.to_vec();
+fn get_common_item_part_2(group: [&str; 3]) -> Option<char> {
     group[0]
         .chars()
         .zip(group[1].chars().zip(group[2].chars()))
@@ -103,11 +98,11 @@ fn sum_priorities<T>(groups: Vec<T>, get_char_predicate: fn(T) -> Option<char>) 
     })
 }
 
-pub fn part_1(groups: Vec<(&str, &str)>) -> u32 {
+pub fn part_1(groups: Vec<[&str; 2]>) -> u32 {
     sum_priorities(groups, get_common_item_part_1)
 }
 
-pub fn part_2(groups: Vec<(&str, &str, &str)>) -> u32 {
+pub fn part_2(groups: Vec<[&str; 3]>) -> u32 {
     sum_priorities(groups, get_common_item_part_2)
 }
 
@@ -136,12 +131,12 @@ mod test {
     fn test_prepare_input() {
         let result = prepare_input_part_1(EXAMPLE_INPUT);
         let expected = vec![
-            ("vJrwpWtwJgWr", "hcsFMMfFFhFp"),
-            ("jqHRNqRjqzjGDLGL", "rsFMfFZSrLrFZsSL"),
-            ("PmmdzqPrV", "vPwwTWBwg"),
-            ("wMqvLMZHhHMvwLH", "jbvcjnnSBnvTQFn"),
-            ("ttgJtRGJ", "QctTZtZT"),
-            ("CrZsJsPPZsGz", "wwsLwLmpwMDw"),
+            ["vJrwpWtwJgWr", "hcsFMMfFFhFp"],
+            ["jqHRNqRjqzjGDLGL", "rsFMfFZSrLrFZsSL"],
+            ["PmmdzqPrV", "vPwwTWBwg"],
+            ["wMqvLMZHhHMvwLH", "jbvcjnnSBnvTQFn"],
+            ["ttgJtRGJ", "QctTZtZT"],
+            ["CrZsJsPPZsGz", "wwsLwLmpwMDw"],
         ];
 
         assert_eq!(result, expected);
