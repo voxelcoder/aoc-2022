@@ -1,5 +1,3 @@
-use std::cmp::Ordering::{Equal, Greater};
-
 enum Intersection {
     Overlap,
     Includes,
