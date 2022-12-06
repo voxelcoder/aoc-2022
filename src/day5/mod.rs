@@ -1,5 +1,5 @@
 struct Stack {
-    pub id: u32,
+    pub id: u8,
     pub crates: Vec<char>,
 }
 
@@ -28,9 +28,9 @@ impl Stack {
 
 #[derive(Copy, Clone, Debug)]
 struct Instruction {
-    pub count: u32,
-    pub from: u32,
-    pub to: u32,
+    pub count: u8,
+    pub from: u8,
+    pub to: u8,
 }
 
 impl From<&str> for Instruction {
@@ -39,9 +39,9 @@ impl From<&str> for Instruction {
         let from_to = split[1].split("to").map(str::trim).collect::<Vec<_>>();
 
         Self {
-            count: split[0].replace("move ", "").parse::<u32>().unwrap(),
-            from: from_to[0].parse::<u32>().unwrap(),
-            to: from_to[1].replace("to ", "").trim().parse::<u32>().unwrap(),
+            count: split[0].replace("move ", "").parse::<u8>().unwrap(),
+            from: from_to[0].parse::<u8>().unwrap(),
+            to: from_to[1].replace("to ", "").trim().parse::<u8>().unwrap(),
         }
     }
 }
@@ -49,7 +49,7 @@ impl From<&str> for Instruction {
 fn construct_stacks(input: Vec<Vec<String>>) -> Vec<Stack> {
     (0..input[0].len())
         .map(|x| Stack {
-            id: x as u32,
+            id: x as u8,
             crates: (0..input.len())
                 .map(|y| input[y][x].chars().into_iter().collect::<Vec<_>>()[1])
                 .filter(|crate_| !crate_.is_whitespace())
