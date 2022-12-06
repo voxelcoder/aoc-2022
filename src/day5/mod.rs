@@ -99,21 +99,17 @@ fn execute(input: &str, part: u8) -> String {
     let (mut stacks, instructions) = prepare_input(input);
 
     for instruction in instructions {
-        let mut popped_chars: Vec<char> = vec![];
-        for crate_count in 1..=instruction.count {
-            let popped = stacks[instruction.from as usize - 1].pop();
-            if popped.is_none() {
-                continue;
-            }
-            popped_chars.push(popped.unwrap())
-        }
+        let mut popped_chars: Vec<char> = (0..instruction.count)
+            .filter_map(|_| stacks[instruction.from as usize - 1].pop())
+            .collect();
 
         if part == 1 {
             popped_chars.reverse();
         }
 
-        popped_chars.append(&mut stacks[instruction.to as usize - 1].crates);
-        stacks[instruction.to as usize - 1].crates = popped_chars;
+        let to_stack = &mut stacks[instruction.to as usize - 1];
+        popped_chars.append(&mut to_stack.crates);
+        to_stack.crates = popped_chars;
     }
 
     String::from_iter(stacks.iter().map(|stack| stack.crates.first().unwrap()))
