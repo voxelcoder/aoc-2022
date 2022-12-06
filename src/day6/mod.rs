@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 pub fn part_1(input: &str) -> usize {
     execute(input, 4).unwrap()
 }
@@ -9,15 +7,15 @@ pub fn part_2(input: &str) -> usize {
 }
 
 fn execute(input: &str, unique_count: usize) -> Option<usize> {
-    let mut stream_window: Vec<char> = vec![input.chars().next().unwrap(); unique_count];
+    let chars = input.as_bytes();
 
-    for (i, char) in input.chars().enumerate() {
-        stream_window.push(char);
-        stream_window.drain(..1);
+    for i in 0..chars.len() {
+        let current_set = &mut chars[i..i + unique_count].to_vec();
+        current_set.sort_unstable();
+        current_set.dedup();
 
-        let current_set: HashSet<char> = stream_window.iter().cloned().collect::<HashSet<char>>();
         if current_set.len() == unique_count {
-            return Some(i + 1);
+            return Some(i + unique_count);
         }
     }
 
