@@ -26,7 +26,6 @@ impl Stack {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
 struct Instruction {
     pub count: u8,
     pub from: u8,
