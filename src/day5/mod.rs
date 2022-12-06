@@ -100,7 +100,6 @@ fn execute(input: &str, part: u8) -> String {
 
     for instruction in instructions {
         let mut popped_chars: Vec<char> = vec![];
-
         for crate_count in 1..=instruction.count {
             let popped = stacks[instruction.from as usize - 1].pop();
             if popped.is_none() {
@@ -109,20 +108,15 @@ fn execute(input: &str, part: u8) -> String {
             popped_chars.push(popped.unwrap())
         }
 
-        if part == 2 {
+        if part == 1 {
             popped_chars.reverse();
         }
 
-        popped_chars
-            .iter()
-            .for_each(|char| stacks[instruction.to as usize - 1].push(*char))
+        popped_chars.append(&mut stacks[instruction.to as usize - 1].crates);
+        stacks[instruction.to as usize - 1].crates = popped_chars;
     }
 
-    String::from_iter(
-        stacks
-            .into_iter()
-            .map(|stack| *stack.crates.first().unwrap_or(&' ')),
-    )
+    String::from_iter(stacks.iter().map(|stack| stack.crates.first().unwrap()))
 }
 
 pub fn part_1(input: &str) -> String {
