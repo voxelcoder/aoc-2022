@@ -7,54 +7,57 @@ pub fn part_1(input: &str) -> u32 {
         .map(|(y, row)| {
             row.iter().enumerate().fold(0, |acc, (x, tree)| {
                 acc + u32::from(
-                    is_on_matrix_edge(&matrix, row, x, y)
+                    is_on_forest_edge(&matrix, row, x, y)
                         || get_all_trees_around(&matrix, row, x, y)
                             .iter()
-                            .any(|x| x.iter().all(|t| t < tree)),
+                            .any(|row| row.iter().all(|t| t < tree)),
                 )
             })
         })
-        .sum::<u32>()
+        .sum()
 }
 
 pub fn part_2(input: &str) -> u32 {
-    let matrix = parse_input(input);
+    let forest = parse_input(input);
+    let mut highest_score = 0;
 
-    let mut scenic_score_matrix: Vec<Vec<u32>> = vec![vec![0; matrix[0].len()]; matrix.len()];
-    for (y, row) in matrix.iter().enumerate() {
+    for (y, row) in forest.iter().enumerate() {
         for (x, tree) in row.iter().enumerate() {
-            let [below, above, left, right] = &get_all_trees_around(&matrix, row, x, y);
+            let [below, above, left, right] = &get_all_trees_around(&forest, row, x, y);
 
-            scenic_score_matrix[x][y] = [
-                get_max_view(left, *tree, true),
-                get_max_view(right, *tree, false),
-                get_max_view(above, *tree, true),
-                get_max_view(below, *tree, false),
-            ]
-            .iter()
-            .product();
+            let score = get_max_view(left, *tree, true)
+                * get_max_view(right, *tree, false)
+                * get_max_view(above, *tree, true)
+                * get_max_view(below, *tree, false);
+
+            if score > highest_score {
+                highest_score = score
+            }
         }
     }
 
-    *scenic_score_matrix
-        .iter()
-        .map(|row| row.iter().max().unwrap_or(&0))
-        .max()
-        .unwrap_or(&0)
+    highest_score
 }
 
-fn get_max_view(row: &[u8], current_tree: u8, rev: bool) -> u32 {
+fn get_max_view(row: &[Tree], current_tree: Tree, rev: bool) -> u32 {
     let mut count = 0;
-    let mut row = row.to_vec();
+
+    let mut inner = |other_tree: u32| {
+        count += 1;
+        other_tree < current_tree
+    };
 
     if rev {
-        row.reverse();
-    }
-
-    for other_tree in row {
-        count += 1;
-        if other_tree >= current_tree {
-            break;
+        for tree in row.iter().rev() {
+            if !inner(*tree) {
+                break;
+            }
+        }
+    } else {
+        for tree in row.iter() {
+            if !inner(*tree) {
+                break;
+            }
         }
     }
 
@@ -62,11 +65,11 @@ fn get_max_view(row: &[u8], current_tree: u8, rev: bool) -> u32 {
 }
 
 fn get_all_trees_around(
-    matrix: &[Vec<u8>],
-    current_row: &[u8],
+    matrix: &[Vec<Tree>],
+    current_row: &[Tree],
     x: usize,
     y: usize,
-) -> [Vec<u8>; 4] {
+) -> [Vec<Tree>; 4] {
     [
         get_all_trees_below(matrix, x, y),
         get_all_trees_above(matrix, x, y),
@@ -76,41 +79,43 @@ fn get_all_trees_around(
 }
 
 #[inline]
-fn get_all_trees_above(matrix: &[Vec<u8>], x: usize, y: usize) -> Vec<u8> {
+fn get_all_trees_above(matrix: &[Vec<Tree>], x: usize, y: usize) -> Vec<Tree> {
     matrix.iter().map(|row| row[x]).take(y).collect()
 }
 
 #[inline]
-fn get_all_trees_below(matrix: &[Vec<u8>], x: usize, y: usize) -> Vec<u8> {
+fn get_all_trees_below(matrix: &[Vec<Tree>], x: usize, y: usize) -> Vec<Tree> {
     matrix.iter().map(|row| row[x]).skip(y + 1).collect()
 }
 
 #[inline]
-fn get_all_trees_to_the_left(current_row: &[u8], x: usize) -> Vec<u8> {
+fn get_all_trees_to_the_left(current_row: &[Tree], x: usize) -> Vec<Tree> {
     current_row[..x].to_vec()
 }
 
 #[inline]
-fn get_all_trees_to_the_right(current_row: &[u8], x: usize) -> Vec<u8> {
+fn get_all_trees_to_the_right(current_row: &[Tree], x: usize) -> Vec<Tree> {
     current_row[x + 1..].to_vec()
 }
 
 #[inline]
-fn is_on_matrix_edge(matrix: &[Vec<u8>], current_row: &[u8], x: usize, y: usize) -> bool {
+fn is_on_forest_edge(matrix: &[Vec<Tree>], current_row: &[Tree], x: usize, y: usize) -> bool {
     x == 0 || x == current_row.len() - 1 || y == 0 || y == matrix.len() - 1
 }
 
-fn parse_input(input: &str) -> Vec<Vec<u8>> {
+fn parse_input(input: &str) -> Vec<Vec<Tree>> {
     input
         .trim()
         .split('\n')
         .map(|row| {
             row.chars()
-                .map(|number| number.to_string().parse::<u8>().unwrap())
-                .collect::<Vec<_>>()
+                .map(|number| number.to_string().parse::<Tree>().unwrap())
+                .collect()
         })
-        .collect::<Vec<_>>()
+        .collect()
 }
+
+type Tree = u32;
 
 #[cfg(test)]
 mod test {
